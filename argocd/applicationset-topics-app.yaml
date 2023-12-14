@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: topics-app
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: false
+  generators:
+    - list:
+        elements:
+          - url: https://kubernetes.default.svc
+            branch: main
+  template:
+    metadata:
+      name: "topics-app-{{branch}}"
+    spec:
+      project: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+      source:
+        # URL of the repository
+        repoURL: https://github.com/LeitnerMi/rabbitmq-poc-gitops-topics-app.git
+        # Revision (tag/branch/commit) of the repository (eg HEAD)
+        targetRevision: "{{ branch }}"
+        # Path within the repository where Kubernetes manifests (and/or Helm, Kustomize, Jsonnet resources) are located
+        path: app/env/{{ branch }}
+      destination:
+        server: "{{url}}"
+        namespace: "topics-app-{{branch}}"
